@@ -6,6 +6,17 @@ const app = express();
 const port = process.env.PORT || 3001;
 const renderWebhookSecret = process.env.RENDER_WEBHOOK_SECRET || '';
 
+interface WebhookData {
+    id: string
+    serviceId: string
+}
+
+interface WebhookPayload {
+    type: string
+    timestamp: Date
+    data: WebhookData
+}
+
 app.post("/webhook", express.raw({type: 'application/json'}), (req: Request, res: Response, next: any) => {
     const headers: WebhookUnbrandedRequiredHeaders = {
         "webhook-id": req.header("webhook-id") || "",
@@ -19,6 +30,10 @@ app.post("/webhook", express.raw({type: 'application/json'}), (req: Request, res
     } catch (error) {
        return next(error)
     }
+
+    const payload: WebhookPayload = JSON.parse(req.body)
+
+    console.log(payload)
 
     res.status(200).send({})
 });
