@@ -44,7 +44,7 @@ app.post("/webhook", express.raw({type: 'application/json'}), (req: Request, res
     handleWebhook(payload)
 });
 
-app.use((err: any, req: Request, res: Response) => {
+app.use((err: any, req: Request, res: Response, next: any) => {
     console.error(err);
     if (err instanceof WebhookVerificationError) {
         res.status(400).send({})
@@ -56,10 +56,10 @@ app.use((err: any, req: Request, res: Response) => {
 app.listen(port, () => console.log(`Example app listening on port ${port}!`));
 
 async function handleWebhook(payload: WebhookPayload) {
-    if (payload.type === "deploy_ended") {
+    if (payload.type === "deploy_ended" || payload.type === "deploy_started") {
         try {
             const service = await fetchServiceInfo(payload)
-            console.log(`deploy ended for service ${service.name}`)
+            console.log(`${payload.type} for service ${service.name}`)
         } catch (error) {
             console.error(error)
         }

@@ -10,7 +10,8 @@
   "scripts": {
     "build": "pnpm exec tsc",
     "start": "node dist/app.js",
-    "dev": "tsnd --respawn app.ts"
+    "dev": "tsnd --respawn app.ts",
+    "typecheck": "tsc --noEmit --pretty"
   },
   "keywords": [],
   "dependencies": {
