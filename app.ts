@@ -30,7 +30,7 @@ app.post("/webhook", express.raw({type: 'application/json'}), (req: Request, res
 
     const payload: WebhookPayload = JSON.parse(req.body)
 
-    res.status(200).send({})
+    res.status(200).send({}).end()
 
     // handle the webhook async so we don't timeout the request
     handleWebhook(payload)
@@ -39,9 +39,9 @@ app.post("/webhook", express.raw({type: 'application/json'}), (req: Request, res
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
     console.error(err);
     if (err instanceof WebhookVerificationError) {
-        res.status(400).send({})
+        res.status(400).send({}).end()
     } else {
-        res.status(500).send({})
+        res.status(500).send({}).end()
     }
 });
 
