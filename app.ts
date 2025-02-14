@@ -53,7 +53,7 @@ app.use((err: any, req: Request, res: Response, next: any) => {
     }
 });
 
-app.listen(port, () => console.log(`Example app listening on port ${port}!`));
+const server = app.listen(port, () => console.log(`Example app listening on port ${port}!`));
 
 async function handleWebhook(payload: WebhookPayload) {
     if (payload.type === "deploy_ended" || payload.type === "deploy_started") {
@@ -84,3 +84,10 @@ async function fetchServiceInfo(payload: WebhookPayload) {
         throw new Error(`unable to fetch service info; received code :${res.status.toString()}`)
     }
 }
+
+process.on('SIGTERM', () => {
+    console.debug('SIGTERM signal received: closing HTTP server')
+    server.close(() => {
+        console.debug('HTTP server closed')
+    })
+})
