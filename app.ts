@@ -30,8 +30,6 @@ app.post("/webhook", express.raw({type: 'application/json'}), (req: Request, res
 
     const payload: WebhookPayload = JSON.parse(req.body)
 
-    console.log({msg: "received webhook", payload: payload})
-
     res.status(200).send({})
 
     // handle the webhook async so we don't timeout the request
@@ -75,6 +73,8 @@ async function handleWebhook(payload: WebhookPayload) {
                 const keyValue = await fetchKeyValueInfo(payload)
                 console.log(`${payload.type} for key value ${keyValue.name}`)
                 return
+            default:
+                console.log(`unhandled webhook type ${payload.type} for service ${payload.data.serviceId}`)
         }
     } catch (error) {
         console.error(error)
