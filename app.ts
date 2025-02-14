@@ -1,4 +1,4 @@
-import express, {Request, Response} from "express";
+import express, {NextFunction, Request, Response} from "express";
 import {Webhook, WebhookUnbrandedRequiredHeaders, WebhookVerificationError} from "standardwebhooks"
 
 const app = express();
@@ -7,7 +7,7 @@ const renderWebhookSecret = process.env.RENDER_WEBHOOK_SECRET || '';
 
 const renderAPIURL = "https://api.render.com/v1"
 
-// to create a Render API token, follow instructions here: https://render.com/docs/api#1-create-an-api-key
+// To create a Render API token, follow instructions here: https://render.com/docs/api#1-create-an-api-key
 const renderAPIToken = process.env.RENDER_API_TOKEN || '';
 
 interface WebhookData {
@@ -21,16 +21,9 @@ interface WebhookPayload {
     data: WebhookData
 }
 
-app.post("/webhook", express.raw({type: 'application/json'}), (req: Request, res: Response, next: any) => {
-    const headers: WebhookUnbrandedRequiredHeaders = {
-        "webhook-id": req.header("webhook-id") || "",
-        "webhook-timestamp": req.header("webhook-timestamp") || "",
-        "webhook-signature": req.header("webhook-signature") || ""
-    }
-
+app.post("/webhook", express.raw({type: 'application/json'}), (req: Request, res: Response, next: NextFunction) => {
     try {
-        const wh = new Webhook(renderWebhookSecret);
-        wh.verify(req.body, headers);
+        validateWebhook(req);
     } catch (error) {
        return next(error)
     }
@@ -41,10 +34,11 @@ app.post("/webhook", express.raw({type: 'application/json'}), (req: Request, res
 
     res.status(200).send({})
 
+    // handle the webhook async so we don't timeout the request
     handleWebhook(payload)
 });
 
-app.use((err: any, req: Request, res: Response, next: any) => {
+app.use((err: any, req: Request, res: Response) => {
     console.error(err);
     if (err instanceof WebhookVerificationError) {
         res.status(400).send({})
@@ -55,14 +49,35 @@ app.use((err: any, req: Request, res: Response, next: any) => {
 
 const server = app.listen(port, () => console.log(`Example app listening on port ${port}!`));
 
+function validateWebhook(req: Request) {
+    const headers: WebhookUnbrandedRequiredHeaders = {
+        "webhook-id": req.header("webhook-id") || "",
+        "webhook-timestamp": req.header("webhook-timestamp") || "",
+        "webhook-signature": req.header("webhook-signature") || ""
+    }
+
+    const wh = new Webhook(renderWebhookSecret);
+    wh.verify(req.body, headers);
+}
+
 async function handleWebhook(payload: WebhookPayload) {
-    if (payload.type === "deploy_ended" || payload.type === "deploy_started") {
-        try {
-            const service = await fetchServiceInfo(payload)
-            console.log(`${payload.type} for service ${service.name}`)
-        } catch (error) {
-            console.error(error)
+    try {
+        switch (payload.type) {
+            case "deploy_started":
+                const service = await fetchServiceInfo(payload)
+                console.log(`deploy started for service ${service.name}`)
+                return
+            case "database_available":
+                const postgres = await fetchPostgresInfo(payload)
+                console.log(`${payload.type} for postgres ${postgres.name}`)
+                return
+            case "key_value_available":
+                const keyValue = await fetchKeyValueInfo(payload)
+                console.log(`${payload.type} for key value ${keyValue.name}`)
+                return
         }
+    } catch (error) {
+        console.error(error)
     }
 }
 
@@ -82,6 +97,46 @@ async function fetchServiceInfo(payload: WebhookPayload) {
         return res.json()
     } else {
         throw new Error(`unable to fetch service info; received code :${res.status.toString()}`)
+    }
+}
+
+
+async function fetchPostgresInfo(payload: WebhookPayload) {
+    const res = await fetch(
+        `${renderAPIURL}/postgres/${payload.data.serviceId}`,
+        {
+            method: "get",
+            headers: {
+                "Content-Type": "application/json",
+                Accept: "application/json",
+                Authorization: `Bearer ${renderAPIToken}`,
+            },
+        },
+    )
+    if (res.ok) {
+        return res.json()
+    } else {
+        throw new Error(`unable to fetch postgres info; received code :${res.status.toString()}`)
+    }
+}
+
+
+async function fetchKeyValueInfo(payload: WebhookPayload) {
+    const res = await fetch(
+        `${renderAPIURL}/key-value/${payload.data.serviceId}`,
+        {
+            method: "get",
+            headers: {
+                "Content-Type": "application/json",
+                Accept: "application/json",
+                Authorization: `Bearer ${renderAPIToken}`,
+            },
+        },
+    )
+    if (res.ok) {
+        return res.json()
+    } else {
+        throw new Error(`unable to fetch key value info; received code :${res.status.toString()}`)
     }
 }
 
