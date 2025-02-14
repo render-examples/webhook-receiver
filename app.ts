@@ -38,7 +38,7 @@ app.post("/webhook", express.raw({type: 'application/json'}), (req: Request, res
     handleWebhook(payload)
 });
 
-app.use((err: any, req: Request, res: Response) => {
+app.use((err: any, req: Request, res: Response, next: NextFunction) => {
     console.error(err);
     if (err instanceof WebhookVerificationError) {
         res.status(400).send({})
