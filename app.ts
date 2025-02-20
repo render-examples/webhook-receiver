@@ -5,7 +5,7 @@ const app = express();
 const port = process.env.PORT || 3001;
 const renderWebhookSecret = process.env.RENDER_WEBHOOK_SECRET || '';
 
-const renderAPIURL = "https://api.render.com/v1"
+const renderAPIURL = process.env.RENDER_API_URL || "https://api.render.com/v1"
 
 // To create a Render API token, follow instructions here: https://render.com/docs/api#1-create-an-api-key
 const renderAPIToken = process.env.RENDER_API_TOKEN || '';
