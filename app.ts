@@ -5,7 +5,7 @@ const app = express();
 const port = process.env.PORT || 3001;
 const renderWebhookSecret = process.env.RENDER_WEBHOOK_SECRET || '';
 
-const renderAPIURL = "https://api.render.com/v1"
+const renderAPIURL = process.env.RENDER_API_URL || "https://api.render.com/v1"
 
 // To create a Render API token, follow instructions here: https://render.com/docs/api#1-create-an-api-key
 const renderAPIToken = process.env.RENDER_API_TOKEN || '';
@@ -62,8 +62,15 @@ async function handleWebhook(payload: WebhookPayload) {
     try {
         switch (payload.type) {
             case "deploy_started":
+                const event = await fetchEventInfo(payload)
+                const deploy = await fetchDeployInfo(payload.data.serviceId, event.details.deployId)
                 const service = await fetchServiceInfo(payload)
-                console.log(`deploy started for service ${service.name}`)
+
+                if (deploy.commit) {
+                    console.log(`deploy started for service ${service.name} with commit "${deploy.commit.message}"`)
+                } else {
+                    console.log(`deploy started for service ${service.name} with image sha "${deploy.image.sha}"`)
+                }
                 return
             case "database_available":
                 const postgres = await fetchPostgresInfo(payload)
@@ -78,6 +85,47 @@ async function handleWebhook(payload: WebhookPayload) {
         }
     } catch (error) {
         console.error(error)
+    }
+}
+
+// fetchEventInfo fetches the event that triggered the webhook
+// some events have additional information that isn't in the webhook payload
+// for example, deploy events have the deploy id
+async function fetchEventInfo(payload: WebhookPayload) {
+    const res = await fetch(
+        `${renderAPIURL}/events/${payload.data.id}`,
+        {
+            method: "get",
+            headers: {
+                "Content-Type": "application/json",
+                Accept: "application/json",
+                Authorization: `Bearer ${renderAPIToken}`,
+            },
+        },
+    )
+    if (res.ok) {
+        return res.json()
+    } else {
+        throw new Error(`unable to fetch event info; received code :${res.status.toString()}`)
+    }
+}
+
+async function fetchDeployInfo(serviceId: string, deployId: string) {
+    const res = await fetch(
+        `${renderAPIURL}/services/${serviceId}/deploys/${deployId}`,
+        {
+            method: "get",
+            headers: {
+                "Content-Type": "application/json",
+                Accept: "application/json",
+                Authorization: `Bearer ${renderAPIToken}`,
+            },
+        },
+    )
+    if (res.ok) {
+        return res.json()
+    } else {
+        throw new Error(`unable to fetch deploy info; received code :${res.status.toString()}`)
     }
 }
 
