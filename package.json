@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Render Webhook Receiver Example",
   "main": "app.ts",
-  "repository": "https://github.com/render-examples/express-hello-world",
+  "repository": "https://github.com/render-examples/webhook-receiver",
   "author": "Render Developers",
   "license": "MIT",
   "private": false,
