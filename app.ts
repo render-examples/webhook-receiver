@@ -106,7 +106,7 @@ async function fetchEventInfo(payload: WebhookPayload) {
     if (res.ok) {
         return res.json()
     } else {
-        throw new Error(`unable to fetch service info; received code :${res.status.toString()}`)
+        throw new Error(`unable to fetch event info; received code :${res.status.toString()}`)
     }
 }
 
@@ -125,7 +125,7 @@ async function fetchDeployInfo(serviceId: string, deployId: string) {
     if (res.ok) {
         return res.json()
     } else {
-        throw new Error(`unable to fetch service info; received code :${res.status.toString()}`)
+        throw new Error(`unable to fetch deploy info; received code :${res.status.toString()}`)
     }
 }
 
