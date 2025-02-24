@@ -1,5 +1,6 @@
 import express, {NextFunction, Request, Response} from "express";
 import {Webhook, WebhookUnbrandedRequiredHeaders, WebhookVerificationError} from "standardwebhooks"
+import {RenderDeploy, RenderEvent, RenderKeyValue, RenderPostgres, RenderService, WebhookPayload} from "./render";
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -9,17 +10,6 @@ const renderAPIURL = process.env.RENDER_API_URL || "https://api.render.com/v1"
 
 // To create a Render API token, follow instructions here: https://render.com/docs/api#1-create-an-api-key
 const renderAPIToken = process.env.RENDER_API_TOKEN || '';
-
-interface WebhookData {
-    id: string
-    serviceId: string
-}
-
-interface WebhookPayload {
-    type: string
-    timestamp: Date
-    data: WebhookData
-}
 
 app.post("/webhook", express.raw({type: 'application/json'}), (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -68,7 +58,7 @@ async function handleWebhook(payload: WebhookPayload) {
 
                 if (deploy.commit) {
                     console.log(`deploy started for service ${service.name} with commit "${deploy.commit.message}"`)
-                } else {
+                } else if (deploy.image) {
                     console.log(`deploy started for service ${service.name} with image sha "${deploy.image.sha}"`)
                 }
                 return
@@ -91,7 +81,7 @@ async function handleWebhook(payload: WebhookPayload) {
 // fetchEventInfo fetches the event that triggered the webhook
 // some events have additional information that isn't in the webhook payload
 // for example, deploy events have the deploy id
-async function fetchEventInfo(payload: WebhookPayload) {
+async function fetchEventInfo(payload: WebhookPayload): Promise<RenderEvent> {
     const res = await fetch(
         `${renderAPIURL}/events/${payload.data.id}`,
         {
@@ -110,7 +100,7 @@ async function fetchEventInfo(payload: WebhookPayload) {
     }
 }
 
-async function fetchDeployInfo(serviceId: string, deployId: string) {
+async function fetchDeployInfo(serviceId: string, deployId: string): Promise<RenderDeploy> {
     const res = await fetch(
         `${renderAPIURL}/services/${serviceId}/deploys/${deployId}`,
         {
@@ -129,7 +119,7 @@ async function fetchDeployInfo(serviceId: string, deployId: string) {
     }
 }
 
-async function fetchServiceInfo(payload: WebhookPayload) {
+async function fetchServiceInfo(payload: WebhookPayload): Promise<RenderService> {
     const res = await fetch(
         `${renderAPIURL}/services/${payload.data.serviceId}`,
         {
@@ -149,7 +139,7 @@ async function fetchServiceInfo(payload: WebhookPayload) {
 }
 
 
-async function fetchPostgresInfo(payload: WebhookPayload) {
+async function fetchPostgresInfo(payload: WebhookPayload): Promise<RenderPostgres> {
     const res = await fetch(
         `${renderAPIURL}/postgres/${payload.data.serviceId}`,
         {
@@ -169,7 +159,7 @@ async function fetchPostgresInfo(payload: WebhookPayload) {
 }
 
 
-async function fetchKeyValueInfo(payload: WebhookPayload) {
+async function fetchKeyValueInfo(payload: WebhookPayload): Promise<RenderKeyValue> {
     const res = await fetch(
         `${renderAPIURL}/key-value/${payload.data.serviceId}`,
         {
