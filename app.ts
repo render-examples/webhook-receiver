@@ -19,6 +19,10 @@ if (!renderAPIKey ) {
     process.exit(1);
 }
 
+app.get('/', (req: Request, res: Response) => {
+  res.send('Render Webhook Receiver is listening!')
+})
+
 app.post("/webhook", express.raw({type: 'application/json'}), (req: Request, res: Response, next: NextFunction) => {
     try {
         validateWebhook(req);
