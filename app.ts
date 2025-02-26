@@ -5,11 +5,19 @@ import {RenderDeploy, RenderEvent, RenderKeyValue, RenderPostgres, RenderService
 const app = express();
 const port = process.env.PORT || 3001;
 const renderWebhookSecret = process.env.RENDER_WEBHOOK_SECRET || '';
+if (!renderWebhookSecret ) {
+    console.error("Error: RENDER_WEBHOOK_SECRET is not set.");
+    process.exit(1);
+}
 
 const renderAPIURL = process.env.RENDER_API_URL || "https://api.render.com/v1"
 
 // To create a Render API token, follow instructions here: https://render.com/docs/api#1-create-an-api-key
 const renderAPIKey = process.env.RENDER_API_KEY || '';
+if (!renderAPIKey ) {
+    console.error("Error: RENDER_API_KEY is not set.");
+    process.exit(1);
+}
 
 app.post("/webhook", express.raw({type: 'application/json'}), (req: Request, res: Response, next: NextFunction) => {
     try {
