@@ -5,11 +5,23 @@ import {RenderDeploy, RenderEvent, RenderKeyValue, RenderPostgres, RenderService
 const app = express();
 const port = process.env.PORT || 3001;
 const renderWebhookSecret = process.env.RENDER_WEBHOOK_SECRET || '';
+if (!renderWebhookSecret ) {
+    console.error("Error: RENDER_WEBHOOK_SECRET is not set.");
+    process.exit(1);
+}
 
 const renderAPIURL = process.env.RENDER_API_URL || "https://api.render.com/v1"
 
 // To create a Render API token, follow instructions here: https://render.com/docs/api#1-create-an-api-key
-const renderAPIToken = process.env.RENDER_API_TOKEN || '';
+const renderAPIKey = process.env.RENDER_API_KEY || '';
+if (!renderAPIKey ) {
+    console.error("Error: RENDER_API_KEY is not set.");
+    process.exit(1);
+}
+
+app.get('/', (req: Request, res: Response) => {
+  res.send('Render Webhook Receiver is listening!')
+})
 
 app.post("/webhook", express.raw({type: 'application/json'}), (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -89,7 +101,7 @@ async function fetchEventInfo(payload: WebhookPayload): Promise<RenderEvent> {
             headers: {
                 "Content-Type": "application/json",
                 Accept: "application/json",
-                Authorization: `Bearer ${renderAPIToken}`,
+                Authorization: `Bearer ${renderAPIKey}`,
             },
         },
     )
@@ -108,7 +120,7 @@ async function fetchDeployInfo(serviceId: string, deployId: string): Promise<Ren
             headers: {
                 "Content-Type": "application/json",
                 Accept: "application/json",
-                Authorization: `Bearer ${renderAPIToken}`,
+                Authorization: `Bearer ${renderAPIKey}`,
             },
         },
     )
@@ -127,7 +139,7 @@ async function fetchServiceInfo(payload: WebhookPayload): Promise<RenderService>
             headers: {
                 "Content-Type": "application/json",
                 Accept: "application/json",
-                Authorization: `Bearer ${renderAPIToken}`,
+                Authorization: `Bearer ${renderAPIKey}`,
             },
         },
     )
@@ -147,7 +159,7 @@ async function fetchPostgresInfo(payload: WebhookPayload): Promise<RenderPostgre
             headers: {
                 "Content-Type": "application/json",
                 Accept: "application/json",
-                Authorization: `Bearer ${renderAPIToken}`,
+                Authorization: `Bearer ${renderAPIKey}`,
             },
         },
     )
@@ -167,7 +179,7 @@ async function fetchKeyValueInfo(payload: WebhookPayload): Promise<RenderKeyValu
             headers: {
                 "Content-Type": "application/json",
                 Accept: "application/json",
-                Authorization: `Bearer ${renderAPIToken}`,
+                Authorization: `Bearer ${renderAPIKey}`,
             },
         },
     )
