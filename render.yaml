@@ -6,7 +6,7 @@ services:
   branch: main
   plan: starter
   envVars:
-  - key: RENDER_API_TOKEN
+  - key: RENDER_API_KEY
     sync: false
   - key: RENDER_WEBHOOK_SECRET
     sync: false
