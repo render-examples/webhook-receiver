@@ -3,10 +3,10 @@ services:
   name: webhook-receiver
   runtime: node
   repo: https://github.com/render-examples/webhook-receiver
-  branch: create-webhook-receiver
+  branch: main
   plan: starter
   envVars:
-  - key: RENDER_API_TOKEN
+  - key: RENDER_API_KEY
     sync: false
   - key: RENDER_WEBHOOK_SECRET
     sync: false
